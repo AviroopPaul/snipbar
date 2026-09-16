@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Snipbar fixture</title>
+<style>
+  body { font: 18px/1.6 Georgia, serif; max-width: 640px; margin: 40px auto; padding: 0 20px; color: #222; }
+  textarea, input { font: inherit; width: 100%; box-sizing: border-box; margin: 12px 0; }
+  .spacer { height: 1400px; background: repeating-linear-gradient(#fafafa 0 40px, #f0f0f0 40px 80px); }
+  iframe { width: 100%; height: 160px; border: 1px solid #ccc; }
+</style>
+</head>
+<body>
+  <h1 id="title">Snipbar fixture page</h1>
+  <p id="p1">The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs. How vexingly quick daft zebras jump.</p>
+  <p id="p2">Sphinx of black quartz, judge my vow. The five boxing wizards jump quickly. Jackdaws love my big sphinx of quartz.</p>
+  <textarea id="ta" rows="3">Textarea content that can be selected and copied.</textarea>
+  <input id="inp" value="Input field value here">
+  <iframe id="frame" srcdoc="<p id='fp' style='font:18px Georgia'>Text inside a same origin iframe.</p>"></iframe>
+  <div class="spacer"></div>
+  <p id="p3">A paragraph much further down the page, after a long scroll.</p>
+  <div style="height: 40vh"></div>
+  <p id="p4">Bottom paragraph that sits close to the viewport edge.</p>
+</body>
+</html>

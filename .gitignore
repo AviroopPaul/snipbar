@@ -1,0 +1,5 @@
+node_modules/
+test/shots/
+test/profile-*/
+*.zip
+.DS_Store

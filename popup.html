@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Snipbar</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 264px; padding: 14px 14px 12px;
+    background: #121215; color: #f4f4f5;
+    font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  header img { width: 28px; height: 28px; border-radius: 7px; }
+  h1 { font-size: 15px; font-weight: 650; letter-spacing: -.01em; line-height: 1.1; }
+  .sub { color: #8b8b94; font-size: 11.5px; margin-top: 2px; }
+  label { display: block; color: #8b8b94; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; margin: 10px 0 4px; }
+  select {
+    width: 100%; appearance: none; -webkit-appearance: none;
+    background: #1c1c21 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b8b94' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 9px center / 14px;
+    color: inherit; border: 1px solid rgba(255,255,255,.1); border-radius: 8px;
+    padding: 7px 30px 7px 10px; font: inherit; cursor: pointer;
+  }
+  select:focus-visible { outline: 2px solid #ffd60a; outline-offset: 1px; }
+  footer { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.08); color: #8b8b94; font-size: 11.5px; }
+  footer a { color: #f4f4f5; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
+  footer a:hover { color: #ffd60a; }
+  footer svg { width: 13px; height: 13px; }
+  .saved { color: #ffd60a; opacity: 0; transition: opacity .15s; }
+  .saved.on { opacity: 1; }
+</style>
+</head>
+<body>
+  <header>
+    <img src="icons/icon128.png" alt="">
+    <div>
+      <h1>Snipbar</h1>
+      <div class="sub">Select text, get a bar. <span class="saved" id="saved">Saved</span></div>
+    </div>
+  </header>
+
+  <label for="engine">Search with</label>
+  <select id="engine"></select>
+
+  <label for="assistant">Ask</label>
+  <select id="assistant"></select>
+
+  <footer>
+    <a href="https://github.com/AviroopPaul/snipbar" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2.17c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.76 2.7 1.25 3.35.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.05.78 2.12v3.14c0 .31.21.67.8.56C20.21 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z"/></svg>
+      GitHub
+    </a>
+    <span id="version"></span>
+  </footer>
+  <script src="providers.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
