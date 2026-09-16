@@ -6,7 +6,7 @@ Most of the time you select text because you are about to copy it or look it up.
 
 ![Snipbar under a selection](docs/assets/shot-bar-hover.png)
 
-Landing page: https://avirooppaul.github.io/snipbar/
+Landing page: https://snipbar.vercel.app/
 
 ## What it does
 
@@ -45,7 +45,7 @@ Layout:
 - `providers.js` the search engine and assistant URL tables, shared by content script and popup.
 - `content.js` selection tracking, placement, actions. The bar lives in a shadow root on a `<snipbar-host>` element.
 - `popup.html` / `popup.js` engine and assistant pickers backed by `chrome.storage.sync`.
-- `docs/` the landing page, served from GitHub Pages.
+- `docs/` the landing page, deployed to Vercel (static, see `vercel.json`).
 - `test/verify.mjs` the Playwright suite, `test/fixture.html` the page it drives.
 
 ## License

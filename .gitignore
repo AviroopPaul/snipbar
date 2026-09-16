@@ -3,3 +3,5 @@ test/shots/
 test/profile-*/
 *.zip
 .DS_Store
+.vercel
+.env*
