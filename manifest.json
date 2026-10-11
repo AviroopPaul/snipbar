@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Snipbar",
-  "version": "0.1.0",
-  "description": "Select text on any page and get a small bar right under it: copy, search, or ask ChatGPT.",
+  "version": "0.2.0",
+  "description": "Select text on any page and get a small bar right under it: copy, beautify, search, or ask ChatGPT.",
   "icons": {
     "16": "icons/icon16.png",
     "32": "icons/icon32.png",
@@ -10,6 +10,8 @@
     "128": "icons/icon128.png"
   },
   "permissions": ["clipboardWrite", "storage"],
+  "host_permissions": ["https://snipbar.vercel.app/*"],
+  "background": { "service_worker": "background.js" },
   "action": {
     "default_title": "Snipbar",
     "default_popup": "popup.html",

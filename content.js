@@ -6,6 +6,7 @@
   const GAP = 8; // distance between selection and bar
   const EDGE = 8; // minimum distance from viewport edges
   const MAX_QUERY = 2000;
+  const MAX_BEAUTIFY = 4000; // matches the proxy limit
 
   const settings = { ...SNIPBAR_DEFAULTS };
   let currentText = '';
@@ -16,6 +17,8 @@
   let selectionTimer = 0;
   let flashTimer = 0;
   let raf = 0;
+  let beautifyToken = 0; // bumps on hide so late Beautify replies are dropped
+  let beautifyBusy = false;
 
   // ---------- UI ----------
   const host = document.createElement('snipbar-host');
@@ -58,11 +61,31 @@
       svg { width: 14px; height: 14px; flex: none; }
       .sep { width: 1px; height: 16px; background: rgba(255, 255, 255, .12); margin: 0 1px; }
       .copied { color: #ffd60a; }
+      [hidden] { display: none !important; }
+      .busy span { animation: pulse 1s ease-in-out infinite; }
+      @keyframes pulse { 50% { opacity: .45; } }
+      .card {
+        position: fixed; left: 0; top: 0; box-sizing: border-box;
+        width: min(420px, calc(100vw - 16px));
+        background: #18181c; color: #f4f4f5; border-radius: 10px;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, .3), 0 1px 3px rgba(0, 0, 0, .25), inset 0 0 0 1px rgba(255, 255, 255, .08);
+        font: 400 13.5px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        user-select: none; -webkit-user-select: none;
+        pointer-events: auto;
+      }
+      .card-text { padding: 12px 14px 4px; max-height: 240px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+      .card-foot { display: flex; justify-content: flex-end; gap: 2px; padding: 3px; font-size: 12.5px; font-weight: 500; }
     </style>
     <div class="bar" role="toolbar" aria-label="Snipbar">
       <button data-action="copy" title="Copy selection">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
         <span>Copy</span>
+      </button>
+      <span class="sep" data-sep="beautify"></span>
+      <button data-action="beautify" title="Fix grammar and polish the wording">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 20 11-11M14 4v3M12.5 5.5h3M19 9v2M18 10h2M18 3v1M17.5 3.5h1"/><path d="m13 7 4 4"/></svg>
+        <span>Beautify</span>
       </button>
       <span class="sep"></span>
       <button data-action="search" title="Search selection">
@@ -74,12 +97,25 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.2 2.2M16.2 16.2l2.2 2.2M5.6 18.4l2.2-2.2M16.2 7.8l2.2-2.2"/><circle cx="12" cy="12" r="3"/></svg>
         <span data-label="assistant">ChatGPT</span>
       </button>
+    </div>
+    <div class="card" role="dialog" aria-label="Beautified text" hidden>
+      <div class="card-text"></div>
+      <div class="card-foot">
+        <button data-card="copy"><span>Copy</span></button>
+        <button data-card="close"><span>Close</span></button>
+      </div>
     </div>`;
   const bar = root.querySelector('.bar');
   const copyBtn = root.querySelector('[data-action="copy"]');
   const copyLabel = copyBtn.querySelector('span');
   const engineLabel = root.querySelector('[data-label="engine"]');
   const assistantLabel = root.querySelector('[data-label="assistant"]');
+  const beautifyBtn = root.querySelector('[data-action="beautify"]');
+  const beautifyLabel = beautifyBtn.querySelector('span');
+  const beautifySep = root.querySelector('[data-sep="beautify"]');
+  const card = root.querySelector('.card');
+  const cardText = card.querySelector('.card-text');
+  const cardCopyLabel = card.querySelector('[data-card="copy"] span');
 
   function mount() {
     if (!host.isConnected && document.documentElement) document.documentElement.appendChild(host);
@@ -181,14 +217,37 @@
     bar.style.top = `${top}px`;
     bar.style.setProperty('--arrow-x', `${arrow}px`);
     bar.classList.toggle('above', above);
+    if (!card.hidden) placeCard(left, top, h, above, vw, vh);
+  }
+
+  // The card hangs off the bar on the side away from the selection.
+  function placeCard(barLeft, barTop, barH, above, vw, vh) {
+    const w = card.offsetWidth;
+    const h = card.offsetHeight;
+    const left = Math.max(EDGE, Math.min(barLeft, vw - w - EDGE));
+    let top = above ? barTop - 6 - h : barTop + barH + 6;
+    top = Math.max(EDGE, Math.min(top, vh - h - EDGE));
+    card.style.left = `${left}px`;
+    card.style.top = `${Math.round(top)}px`;
   }
 
   function show(found) {
     mount();
+    if (found.text !== currentText) {
+      // A new selection voids any Beautify result or request for the old one.
+      card.hidden = true;
+      beautifyToken++;
+      beautifyBusy = false;
+    }
     currentText = found.text;
     clearTimeout(flashTimer);
     copyLabel.textContent = 'Copy';
     copyLabel.classList.remove('copied');
+    // Never send passwords to the proxy.
+    const isPassword = document.activeElement?.type === 'password';
+    beautifyBtn.hidden = isPassword;
+    beautifySep.hidden = isPassword;
+    if (!beautifyBusy) resetBeautify();
     place(found.rect);
     if (!visible) {
       visible = true;
@@ -201,6 +260,15 @@
     visible = false;
     bar.classList.remove('show');
     bar.classList.remove('above');
+    card.hidden = true;
+    beautifyToken++;
+    beautifyBusy = false;
+  }
+
+  function resetBeautify() {
+    beautifyBtn.classList.remove('busy');
+    beautifyLabel.textContent = 'Beautify';
+    beautifyLabel.classList.remove('copied');
   }
 
   function evaluate(fromPointer = false) {
@@ -247,11 +315,96 @@
     }
   }
 
+  // Remember where the selection lives so the reply can replace it in place.
+  function captureTarget() {
+    const active = document.activeElement;
+    if (isTextField(active)) {
+      if (active.readOnly || active.disabled) return { kind: 'static' };
+      const start = Math.min(active.selectionStart, active.selectionEnd);
+      const end = Math.max(active.selectionStart, active.selectionEnd);
+      return { kind: 'field', el: active, start, end, snapshot: active.value.slice(start, end) };
+    }
+    const sel = document.getSelection();
+    if (sel && sel.rangeCount) {
+      const range = sel.getRangeAt(0).cloneRange();
+      const node = range.commonAncestorContainer;
+      const el = node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement;
+      if (el && el.isContentEditable) return { kind: 'editable', range, snapshot: range.toString() };
+    }
+    return { kind: 'static' };
+  }
+
+  // insertText keeps the browser undo stack and fires the input events editors listen for.
+  function replaceIn(target, out) {
+    if (target.kind === 'field') {
+      const { el, start, end } = target;
+      if (el.value.slice(start, end) !== target.snapshot) return false;
+      el.focus();
+      el.setSelectionRange(start, end);
+      if (!document.execCommand('insertText', false, out)) {
+        el.setRangeText(out, start, end, 'end');
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      return true;
+    }
+    if (target.kind === 'editable') {
+      if (target.range.toString() !== target.snapshot) return false;
+      const sel = document.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(target.range);
+      return document.execCommand('insertText', false, out);
+    }
+    return false;
+  }
+
+  function flashBeautify(label, ok, then) {
+    beautifyBtn.classList.remove('busy');
+    beautifyLabel.textContent = label;
+    beautifyLabel.classList.toggle('copied', ok);
+    clearTimeout(flashTimer);
+    flashTimer = setTimeout(then, ok ? 700 : 1600);
+  }
+
+  const BEAUTIFY_ERRORS = { busy: 'Busy, retry', too_long: 'Too long', offline: 'Offline' };
+
+  async function beautify(text) {
+    if (beautifyBusy) return;
+    if (text.length > MAX_BEAUTIFY) return flashBeautify('Too long', false, resetBeautify);
+    const target = captureTarget();
+    const token = ++beautifyToken;
+    beautifyBusy = true;
+    card.hidden = true;
+    beautifyBtn.classList.add('busy');
+    beautifyLabel.textContent = 'Polishing';
+    let reply;
+    try {
+      reply = await chrome.runtime.sendMessage({ type: 'beautify', text });
+    } catch {
+      reply = { error: 'reload' }; // extension was updated under this page
+    }
+    if (token !== beautifyToken) return; // bar was dismissed meanwhile
+    beautifyBusy = false;
+    if (!reply || !reply.text) return flashBeautify(BEAUTIFY_ERRORS[reply?.error] || 'Failed', false, resetBeautify);
+
+    if (target.kind !== 'static') {
+      suppressedText = reply.text;
+      if (replaceIn(target, reply.text)) return flashBeautify('Done', true, hide);
+    }
+    resetBeautify();
+    cardText.textContent = reply.text;
+    cardCopyLabel.textContent = 'Copy';
+    cardCopyLabel.classList.remove('copied');
+    card.hidden = false;
+    const found = readSelection();
+    if (found) place(found.rect);
+  }
+
   async function run(action) {
     // Prefer the live selection: it can still settle for a few ms after the bar appears.
     const live = readSelection();
     const text = live ? live.text : currentText;
     if (!text) return hide();
+    if (action === 'beautify') return beautify(text); // keeps the bar open, so no suppression yet
     suppressedText = text;
     if (action === 'copy') {
       const ok = await copyText(text);
@@ -271,6 +424,17 @@
   bar.addEventListener('click', (e) => {
     const btn = e.target.closest('button');
     if (btn) run(btn.dataset.action);
+  });
+  card.addEventListener('mousedown', (e) => e.preventDefault());
+  card.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    if (btn.dataset.card === 'close') return hide();
+    const ok = await copyText(cardText.textContent);
+    cardCopyLabel.textContent = ok ? 'Copied' : 'Failed';
+    cardCopyLabel.classList.toggle('copied', ok);
+    clearTimeout(flashTimer);
+    flashTimer = setTimeout(hide, 700);
   });
 
   // ---------- Page events ----------

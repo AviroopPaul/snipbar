@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Snipbar: copy, search or ask ChatGPT from any text you select</title>
-<meta name="description" content="A Chrome extension that puts a tiny bar under any text you select on any site. Copy it, search it, or ask ChatGPT about it. No menus, no popups.">
+<title>Snipbar: copy, beautify, search or ask ChatGPT from any text you select</title>
+<meta name="description" content="A Chrome extension that puts a tiny bar under any text you select on any site. Copy it, beautify it, search it, or ask ChatGPT about it. No menus, no popups.">
 <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
 <meta property="og:title" content="Snipbar">
-<meta property="og:description" content="Select text on any page. Copy it, search it, or ask ChatGPT. That is the whole extension.">
+<meta property="og:description" content="Select text on any page. Copy it, beautify it, search it, or ask ChatGPT. That is the whole extension.">
 <meta property="og:image" content="https://snipbar.vercel.app/assets/shot-bar-hover.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -126,7 +126,7 @@
   h2 { font-family: var(--serif); font-weight: 400; font-size: clamp(32px, 4vw, 46px); letter-spacing: -.02em; line-height: 1.1; max-width: 20ch; }
   .sub { color: var(--ink-2); margin-top: 14px; max-width: 52ch; font-size: 17px; }
 
-  .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); margin-top: 44px; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+  .three { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--line); margin-top: 44px; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
   .three > div { background: var(--paper); padding: 30px 28px 32px; }
   .three .mini { display: inline-flex; margin-bottom: 22px; }
   .three .mini .bar { transform: scale(.92); transform-origin: left top; font-size: 12.5px; font-weight: 500; font-family: var(--sans); }
@@ -195,7 +195,7 @@
   </nav>
 
   <header class="hero">
-    <div class="eyebrow reveal d1">A Chrome extension, 0 background scripts, 1 job</div>
+    <div class="eyebrow reveal d1">A Chrome extension, no menus, 1 job</div>
     <h1 class="reveal d2">Select text.<br>
       <span class="sel"><mark>Then do the thing.</mark>
         <span class="demo-bar" aria-hidden="true">
@@ -205,6 +205,8 @@
               <span class="copy-lbl"><i>Copy</i><i>Copied</i></span>
             </span>
             <span class="sep"></span>
+            <span class="b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 20 11-11M14 4v3M12.5 5.5h3M19 9v2M18 10h2M18 3v1M17.5 3.5h1"/><path d="m13 7 4 4"/></svg>Beautify</span>
+            <span class="sep"></span>
             <span class="b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Google</span>
             <span class="sep"></span>
             <span class="b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.2 2.2M16.2 16.2l2.2 2.2M5.6 18.4l2.2-2.2M16.2 7.8l2.2-2.2"/><circle cx="12" cy="12" r="3"/></svg>ChatGPT</span>
@@ -212,7 +214,7 @@
         </span>
       </span>
     </h1>
-    <p class="lede reveal d3">Almost every time you select text you are about to copy it or look it up. Snipbar puts a tiny bar right under the selection with exactly those actions: copy, search, or ask ChatGPT. On every site, with no menus in between.</p>
+    <p class="lede reveal d3">Almost every time you select text you are about to copy it, fix it, or look it up. Snipbar puts a tiny bar right under the selection with exactly those actions: copy, beautify, search, or ask ChatGPT. On every site, with no menus in between.</p>
     <div class="cta reveal d4">
       <a class="btn dark" href="https://github.com/AviroopPaul/snipbar/releases/latest/download/snipbar.zip">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M6 11l6 6 6-6M4 21h16"/></svg>
@@ -231,13 +233,18 @@
   </header>
 
   <section id="how">
-    <h2>Three buttons. That is the whole interface.</h2>
+    <h2>Four buttons. That is the whole interface.</h2>
     <p class="sub">No right-click menu, no keyboard chord to remember, no popup to open. The bar appears when a selection exists and disappears the moment it does not.</p>
     <div class="three">
       <div>
         <div class="mini"><span class="bar"><span class="b hot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Copy</span></span></div>
         <h3>Copy</h3>
         <p>One click puts the selection on your clipboard and the button says <code>Copied</code> for a beat before the bar gets out of the way. Works in textareas and inputs too.</p>
+      </div>
+      <div>
+        <div class="mini"><span class="bar"><span class="b hot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 20 11-11M14 4v3M12.5 5.5h3M19 9v2M18 10h2M18 3v1M17.5 3.5h1"/><path d="m13 7 4 4"/></svg>Beautify</span></span></div>
+        <h3>Beautify</h3>
+        <p>Fixes grammar, spelling and punctuation and smooths the wording, in your own tone. In a text field or editor it rewrites the selection in place, and <code>Cmd+Z</code> brings the original back. On page text it shows the result with a Copy button.</p>
       </div>
       <div>
         <div class="mini"><span class="bar"><span class="b hot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Google</span></span></div>
@@ -255,7 +262,7 @@
       <div><b>Works everywhere</b><span>Every site, inside iframes, in text fields, with mouse or keyboard selections.</span></div>
       <div><b>Knows its place</b><span>Centred under the selection, flips above near the bottom edge, tracks scrolling.</span></div>
       <div><b>Leaves when told</b><span>Escape, a click elsewhere, or a collapsed selection all dismiss it. It will not nag about the same selection twice.</span></div>
-      <div><b>Nothing phones home</b><span>No analytics, no remote code, no network requests from the extension. Settings sync only through your Chrome profile.</span></div>
+      <div><b>Private by default</b><span>No analytics, no remote code. Only Beautify uses the network: it sends the selected text to the Snipbar server, which asks Google Gemini to polish it. Snipbar keeps no copy. Settings sync only through your Chrome profile.</span></div>
     </div>
   </section>
 
