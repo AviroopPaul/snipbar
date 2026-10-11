@@ -247,6 +247,106 @@ const waitForNewPage = async (trigger) => {
   await waitBar(false, frame).catch(() => {});
 }
 
+// ---- 10b. beautify (proxy mocked inside the service worker) ----
+{
+  const sw = context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'));
+  const mockProxy = (status, body) =>
+    sw.evaluate(({ status, body }) => {
+      self.__calls = [];
+      self.fetch = async (url, opts) => {
+        const { text } = JSON.parse(opts.body);
+        self.__calls.push({ url: String(url), text });
+        const out = body ?? { text: 'POLISHED: ' + text.toUpperCase() };
+        return new Response(JSON.stringify(out), { status, headers: { 'content-type': 'application/json' } });
+      };
+    }, { status, body });
+  const shadow = (fn, arg) => page.evaluate(fn, arg);
+  const beautifyLabel = () =>
+    shadow(() => document.querySelector('snipbar-host').shadowRoot.querySelector('[data-action="beautify"] span').textContent);
+  const cardState = () =>
+    shadow(() => {
+      const c = document.querySelector('snipbar-host').shadowRoot.querySelector('.card');
+      return { open: !c.hidden && c.offsetHeight > 0, text: c.querySelector('.card-text').textContent };
+    });
+  await mockProxy(200);
+  await page.evaluate(() => window.scrollTo(0, 0));
+
+  // static page text -> result card
+  await dragSelect('#p1', 0, 4);
+  await waitBar(true);
+  const selected = await page.evaluate(() => document.getSelection().toString());
+  await clickBar('beautify');
+  await page.waitForFunction(() => !document.querySelector('snipbar-host').shadowRoot.querySelector('.card').hidden);
+  const c = await cardState();
+  record('beautify on page text shows result card', c.open && c.text === 'POLISHED: ' + selected.toUpperCase(), JSON.stringify(c.text));
+  const calls = await sw.evaluate(() => self.__calls);
+  record('beautify posts to the snipbar proxy', calls.length === 1 && calls[0].url === 'https://snipbar.vercel.app/api/beautify', JSON.stringify(calls));
+  await settle(300);
+  await page.screenshot({ path: path.join(SHOTS, 'beautify-card.png'), clip: { x: 150, y: 0, width: 800, height: 400 } });
+  await page.evaluate(() => navigator.clipboard.writeText(''));
+  await shadow(() => document.querySelector('snipbar-host').shadowRoot.querySelector('[data-card="copy"]').click());
+  await settle(150);
+  record('card Copy copies the polished text', (await clipboard()) === c.text);
+  await waitBar(false);
+  record('card closes with the bar', !(await cardState()).open);
+
+  // textarea -> replaced in place, undoable
+  await page.evaluate(() => {
+    const t = document.querySelector('#ta');
+    t.value = 'helo world';
+    t.focus();
+    t.setSelectionRange(0, t.value.length);
+  });
+  await waitBar(true);
+  await clickBar('beautify');
+  await page.waitForFunction(() => document.querySelector('#ta').value.startsWith('POLISHED'));
+  record('beautify replaces textarea selection', (await page.inputValue('#ta')) === 'POLISHED: HELO WORLD', await page.inputValue('#ta'));
+  await page.keyboard.press('ControlOrMeta+z');
+  record('undo restores the original text', (await page.inputValue('#ta')) === 'helo world', await page.inputValue('#ta'));
+  await page.mouse.click(30, 30);
+
+  // contenteditable -> replaced in place
+  await page.locator('#ce').scrollIntoViewIfNeeded();
+  await page.evaluate(() => {
+    const el = document.querySelector('#ce');
+    el.focus();
+    const r = document.createRange();
+    r.selectNodeContents(el);
+    const sel = document.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(r);
+  });
+  await waitBar(true);
+  await clickBar('beautify');
+  await page.waitForFunction(() => document.querySelector('#ce').textContent.startsWith('POLISHED'));
+  const ce = await page.evaluate(() => document.querySelector('#ce').textContent);
+  record('beautify replaces contenteditable selection', ce === 'POLISHED: EDITABLE TEXT THAT NEEDS SOME POLISH HERE.', ce);
+  await page.mouse.click(30, 30);
+
+  // password field -> no Beautify button
+  await page.evaluate(() => {
+    const el = document.querySelector('#pw');
+    el.focus();
+    el.setSelectionRange(0, el.value.length);
+  });
+  await waitBar(true);
+  const pwHidden = await shadow(() => document.querySelector('snipbar-host').shadowRoot.querySelector('[data-action="beautify"]').offsetWidth === 0);
+  record('Beautify is hidden in password fields', pwHidden);
+  await page.keyboard.press('Escape');
+  await page.mouse.click(30, 30);
+
+  // proxy rate limit -> friendly label
+  await mockProxy(429, { error: 'busy' });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await dragSelect('#p2', 0, 3);
+  await waitBar(true);
+  await clickBar('beautify');
+  await page.waitForFunction(() => document.querySelector('snipbar-host').shadowRoot.querySelector('[data-action="beautify"] span').textContent === 'Busy, retry');
+  record('rate-limited proxy shows Busy, retry', (await beautifyLabel()) === 'Busy, retry');
+  await page.mouse.click(30, 30);
+  await waitBar(false);
+}
+
 // ---- 11. scroll keeps bar attached ----
 {
   await page.locator('#p3').scrollIntoViewIfNeeded();

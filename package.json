@@ -1,13 +1,13 @@
 {
   "name": "snipbar",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
     "verify": "node test/verify.mjs",
     "icons": "node test/gen-icons.mjs",
     "capture": "node test/capture.mjs",
-    "zip": "rm -f snipbar.zip && zip -r snipbar.zip manifest.json providers.js content.js popup.html popup.js icons -x '.DS_Store'"
+    "zip": "rm -f snipbar.zip && zip -r snipbar.zip manifest.json background.js providers.js content.js popup.html popup.js icons -x '.DS_Store'"
   },
   "devDependencies": {
     "playwright": "^1.50.0"
